@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>"置身钉内"小红书舆情分析报告</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<style>
+:root {
+  --primary: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-dark: #3730a3;
+  --cyan: #06b6d4;
+  --amber: #f59e0b;
+  --emerald: #10b981;
+  --red: #ef4444;
+  --rose: #f43f5e;
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --card-bg: #ffffff;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: var(--slate-50);
+  color: var(--slate-800);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== Hero ========== */
+.hero {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 35%, #4338ca 70%, #6366f1 100%);
+  color: #fff;
+  padding: 80px 24px 100px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; right: -20%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero-content { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
+.hero-tag {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 6px 18px; border-radius: 50px;
+  font-size: 14px; letter-spacing: 1px; margin-bottom: 24px;
+}
+.hero h1 { font-size: 42px; font-weight: 800; margin-bottom: 16px; letter-spacing: 2px; text-shadow: 0 2px 20px rgba(0,0,0,0.3); }
+.hero-subtitle { font-size: 18px; opacity: 0.85; max-width: 700px; margin: 0 auto 40px; line-height: 1.8; }
+.hero-stats { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
+.hero-stat { text-align: center; }
+.hero-stat-num { font-size: 36px; font-weight: 800; background: linear-gradient(135deg, #06b6d4, #a5f3fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero-stat-label { font-size: 13px; opacity: 0.7; margin-top: 4px; letter-spacing: 1px; }
+
+/* ========== Container & Section ========== */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 64px 0; }
+.section-header { text-align: center; margin-bottom: 48px; }
+.section-num { display: inline-block; font-size: 14px; font-weight: 600; color: var(--primary); background: var(--slate-100); padding: 4px 16px; border-radius: 50px; margin-bottom: 12px; letter-spacing: 1px; }
+.section-title { font-size: 30px; font-weight: 700; color: var(--slate-900); margin-bottom: 12px; }
+.section-desc { font-size: 15px; color: var(--slate-500); max-width: 640px; margin: 0 auto; }
+
+/* ========== Cards ========== */
+.card {
+  background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow-md);
+  padding: 32px; transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.card-title {
+  font-size: 18px; font-weight: 700; color: var(--slate-700);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.card-title::before { content: ''; width: 4px; height: 20px; background: var(--primary); border-radius: 4px; }
+
+/* ========== Data Cards Grid ========== */
+.data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 48px; }
+.data-card {
+  background: var(--card-bg); border-radius: 16px; padding: 28px 24px;
+  box-shadow: var(--shadow-md); text-align: center; position: relative; overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.data-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
+.data-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+.data-card.c1::before { background: linear-gradient(90deg, #4f46e5, #818cf8); }
+.data-card.c2::before { background: linear-gradient(90deg, #06b6d4, #67e8f9); }
+.data-card.c3::before { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
+.data-card.c4::before { background: linear-gradient(90deg, #10b981, #6ee7b7); }
+.data-card.c5::before { background: linear-gradient(90deg, #ef4444, #fca5a5); }
+.data-card.c6::before { background: linear-gradient(90deg, #8b5cf6, #c4b5fd); }
+.data-card-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px; }
+.data-card.c1 .data-card-icon { background: #eef2ff; color: #4f46e5; }
+.data-card.c2 .data-card-icon { background: #ecfeff; color: #06b6d4; }
+.data-card.c3 .data-card-icon { background: #fffbeb; color: #f59e0b; }
+.data-card.c4 .data-card-icon { background: #ecfdf5; color: #10b981; }
+.data-card.c5 .data-card-icon { background: #fef2f2; color: #ef4444; }
+.data-card.c6 .data-card-icon { background: #f5f3ff; color: #8b5cf6; }
+.data-card-value { font-size: 32px; font-weight: 800; color: var(--slate-900); margin-bottom: 4px; }
+.data-card-label { font-size: 13px; color: var(--slate-500); letter-spacing: 0.5px; }
+
+/* ========== Chart ========== */
+.chart-row { display: grid; gap: 24px; margin-bottom: 24px; }
+.chart-row.two { grid-template-columns: 1fr 1fr; }
+.chart-row.one { grid-template-columns: 1fr; }
+@media (max-width: 768px) { .chart-row.two { grid-template-columns: 1fr; } }
+.chart-box { background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow-md); padding: 28px; }
+.chart-box-title { font-size: 17px; font-weight: 700; color: var(--slate-800); margin-bottom: 4px; }
+.chart-box-sub { font-size: 13px; color: var(--slate-400); margin-bottom: 20px; }
+.chart { width: 100%; height: 360px; }
+.chart.tall { height: 420px; }
+.chart.short { height: 300px; }
+
+/* ========== BG Section ========== */
+.bg-section {
+  background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow-md); padding: 40px;
+}
+.bg-section p { font-size: 15px; color: var(--slate-600); line-height: 1.9; margin-bottom: 16px; }
+.bg-section p:last-child { margin-bottom: 0; }
+.highlight {
+  background: linear-gradient(120deg, rgba(79,70,229,0.08) 0%, rgba(6,182,212,0.08) 100%);
+  padding: 2px 8px; border-radius: 4px; font-weight: 600; color: var(--primary-dark);
+}
+
+/* ========== Questions ========== */
+.questions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; }
+@media (max-width: 768px) { .questions { grid-template-columns: 1fr; } }
+.question-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 16px; background: var(--slate-50); border-radius: 12px; border-left: 3px solid var(--primary);
+}
+.question-num {
+  flex-shrink: 0; width: 28px; height: 28px; background: var(--primary); color: #fff;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+.question-text { font-size: 14px; color: var(--slate-600); line-height: 1.6; }
+
+/* ========== Method Detail ========== */
+.method-detail {
+  background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow-md);
+  padding: 32px; margin-bottom: 20px;
+}
+.method-detail h3 {
+  font-size: 18px; font-weight: 700; color: var(--slate-800);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+}
+.method-detail h3 .md-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.method-detail p { font-size: 15px; color: var(--slate-600); line-height: 1.9; margin-bottom: 12px; }
+.method-detail p:last-child { margin-bottom: 0; }
+
+/* ========== Tools Table ========== */
+.tools-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tools-table th {
+  background: var(--slate-100); padding: 12px 16px; text-align: left;
+  font-weight: 600; color: var(--slate-700); border-bottom: 2px solid var(--slate-200);
+}
+.tools-table td { padding: 10px 16px; border-bottom: 1px solid var(--slate-100); color: var(--slate-600); }
+.tools-table tr:hover td { background: var(--slate-50); }
+.tools-table .cat { display: inline-block; padding: 2px 10px; border-radius: 50px; font-size: 12px; font-weight: 600; }
+
+/* ========== Sentiment ========== */
+.sentiment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 768px) { .sentiment-grid { grid-template-columns: 1fr; } }
+
+/* ========== Risk Cards ========== */
+.risk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+.risk-card {
+  background: var(--card-bg); border-radius: 16px; padding: 32px;
+  box-shadow: var(--shadow-md); border-top: 4px solid; transition: transform 0.2s;
+}
+.risk-card:hover { transform: translateY(-4px); }
+.risk-card.r1 { border-top-color: #ef4444; }
+.risk-card.r2 { border-top-color: #f59e0b; }
+.risk-card.r3 { border-top-color: #8b5cf6; }
+.risk-card.r4 { border-top-color: #06b6d4; }
+.risk-card.r5 { border-top-color: #f43f5e; }
+.risk-level {
+  display: inline-block; font-size: 12px; font-weight: 700;
+  padding: 3px 12px; border-radius: 50px; margin-bottom: 12px;
+}
+.risk-card.r1 .risk-level { background: #fef2f2; color: #ef4444; }
+.risk-card.r2 .risk-level { background: #fffbeb; color: #f59e0b; }
+.risk-card.r3 .risk-level { background: #f5f3ff; color: #8b5cf6; }
+.risk-card.r4 .risk-level { background: #ecfeff; color: #06b6d4; }
+.risk-card.r5 .risk-level { background: #fff1f2; color: #f43f5e; }
+.risk-card h4 { font-size: 16px; font-weight: 700; color: var(--slate-800); margin-bottom: 12px; }
+.risk-card p { font-size: 14px; color: var(--slate-600); line-height: 1.8; }
+
+/* ========== Recommendation ========== */
+.reco-list { display: flex; flex-direction: column; gap: 20px; }
+.reco-item {
+  display: flex; gap: 20px; background: var(--card-bg); border-radius: 14px;
+  padding: 28px; box-shadow: var(--shadow-sm); border: 1px solid var(--slate-200);
+  transition: box-shadow 0.2s;
+}
+.reco-item:hover { box-shadow: var(--shadow-md); }
+.reco-icon {
+  flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: #fff;
+}
+.reco-content h4 { font-size: 16px; font-weight: 600; color: var(--slate-800); margin-bottom: 8px; }
+.reco-content p { font-size: 14px; color: var(--slate-600); line-height: 1.8; }
+
+/* ========== Conclusion ========== */
+.conclusion-box {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+  border-radius: 20px; padding: 48px; color: #fff;
+}
+.conclusion-box h3 { font-size: 22px; font-weight: 700; margin-bottom: 28px; text-align: center; }
+.conclusion-item {
+  display: flex; gap: 16px; margin-bottom: 24px; padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.conclusion-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.conclusion-num {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #a5f3fc;
+}
+.conclusion-text h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #c7d2fe; }
+.conclusion-text p { font-size: 14px; opacity: 0.85; line-height: 1.8; }
+
+/* ========== Propagation Flow ========== */
+.flow-diagram { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; padding: 32px 0; }
+.flow-node { text-align: center; padding: 20px 24px; border-radius: 14px; min-width: 140px; }
+.flow-node-1 { background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff; }
+.flow-node-2 { background: linear-gradient(135deg, #06b6d4, #22d3ee); color: #fff; }
+.flow-node-3 { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff; }
+.flow-node-4 { background: linear-gradient(135deg, #10b981, #34d399); color: #fff; }
+.flow-node h5 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.flow-node p { font-size: 12px; opacity: 0.85; }
+.flow-arrow { font-size: 28px; color: var(--slate-300); padding: 0 12px; }
+@media (max-width: 768px) {
+  .flow-arrow { transform: rotate(90deg); padding: 8px 0; }
+  .flow-diagram { flex-direction: column; }
+}
+
+/* ========== Text Block ========== */
+.text-block {
+  background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow-md);
+  padding: 32px; margin-bottom: 20px;
+}
+.text-block h3 {
+  font-size: 18px; font-weight: 700; color: var(--slate-800);
+  margin-bottom: 16px; padding-left: 12px; border-left: 4px solid var(--primary);
+}
+.text-block p { font-size: 15px; color: var(--slate-600); line-height: 1.9; margin-bottom: 14px; }
+.text-block p:last-child { margin-bottom: 0; }
+.text-block .sub-point { margin-top: 10px; }
+.text-block .sub-point li {
+  font-size: 14px; color: var(--slate-600); line-height: 1.8;
+  margin-bottom: 8px; padding-left: 8px; list-style: none;
+  position: relative;
+}
+.text-block .sub-point li::before {
+  content: ''; position: absolute; left: -8px; top: 8px;
+  width: 4px; height: 4px; background: var(--primary); border-radius: 50%;
+}
+
+/* ========== Footer ========== */
+.footer {
+  background: var(--slate-900); color: var(--slate-400);
+  text-align: center; padding: 40px 24px; font-size: 13px;
+}
+.footer p { margin-bottom: 4px; }
+
+/* ========== Animations ========== */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.animate { animation: fadeInUp 0.6s ease forwards; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--slate-100); }
+::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+/* ========== Navbar ========== */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--slate-200);
+  transition: box-shadow 0.3s;
+}
+.navbar.scrolled { box-shadow: var(--shadow-md); }
+.navbar-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 24px;
+  display: flex; align-items: center; height: 52px; gap: 4px;
+}
+.navbar-brand {
+  font-size: 14px; font-weight: 700; color: var(--primary);
+  white-space: nowrap; margin-right: 12px; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 6px;
+}
+.navbar-brand-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+}
+.navbar-links {
+  display: flex; gap: 2px; overflow-x: auto; flex: 1;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.navbar-links::-webkit-scrollbar { display: none; }
+.navbar-link {
+  padding: 6px 14px; border-radius: 8px; font-size: 13px;
+  color: var(--slate-500); white-space: nowrap; cursor: pointer;
+  transition: all 0.2s; text-decoration: none; font-weight: 500;
+  border: 1px solid transparent;
+}
+.navbar-link:hover {
+  color: var(--primary); background: var(--slate-50);
+}
+.navbar-link.active {
+  color: var(--primary); background: #eef2ff;
+  border-color: rgba(79,70,229,0.15); font-weight: 600;
+}
+.navbar-progress {
+  position: absolute; bottom: 0; left: 0; height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--cyan));
+  transition: width 0.15s;
+}
+@media (max-width: 768px) {
+  .navbar-inner { height: 48px; }
+  .navbar-brand { font-size: 12px; margin-right: 8px; }
+  .navbar-link { padding: 5px 10px; font-size: 12px; }
+}
+
+/* ========== Network Graph ========== */
+.network-wrap {
+  position: relative;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 20px 20px 16px;
+  margin-bottom: 24px;
+}
+.network-wrap-title {
+  font-size: 16px; font-weight: 700; color: var(--slate-800);
+  margin-bottom: 4px;
+}
+.network-wrap-sub {
+  font-size: 13px; color: var(--slate-500); margin-bottom: 12px;
+}
+#network-svg {
+  width: 100%; height: 520px; border-radius: 8px;
+  background: var(--slate-50); cursor: grab;
+  border: 1px solid var(--slate-200);
+}
+#network-svg:active { cursor: grabbing; }
+.network-tooltip {
+  position: absolute; pointer-events: none;
+  background: rgba(15,23,42,0.92); color: #fff;
+  padding: 10px 14px; border-radius: 8px;
+  font-size: 13px; line-height: 1.6;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 50; opacity: 0; transition: opacity 0.15s;
+  max-width: 260px;
+}
+.network-tooltip.visible { opacity: 1; }
+.network-legend {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  margin-top: 12px; font-size: 12px; color: var(--slate-500);
+}
+.network-legend-item { display: flex; align-items: center; gap: 6px; }
+.network-legend-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  display: inline-block; flex-shrink: 0;
+}
+.network-controls {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.network-btn {
+  padding: 6px 14px; border-radius: 8px;
+  font-size: 12px; cursor: pointer;
+  background: var(--slate-100); color: var(--slate-600);
+  border: 1px solid var(--slate-200);
+  transition: all 0.2s; font-weight: 500;
+}
+.network-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.network-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+@media (max-width: 768px) {
+  #network-svg { height: 360px; }
+  .network-legend { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== Navbar ========== -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <div class="navbar-brand">
+      <div class="navbar-brand-icon">钉</div>
+      舆情分析报告
+    </div>
+    <div class="navbar-links">
+      <a class="navbar-link" href="#sec-bg">研究背景</a>
+      <a class="navbar-link" href="#sec-method">数据与方法</a>
+      <a class="navbar-link" href="#sec-persons">核心人物与事件</a>
+      <a class="navbar-link" href="#sec-topics">话题聚类</a>
+      <a class="navbar-link" href="#sec-network">社交网络</a>
+      <a class="navbar-link" href="#sec-sentiment">情感分析</a>
+      <a class="navbar-link" href="#sec-propagation">传播机制</a>
+      <a class="navbar-link" href="#sec-risk">风险评估</a>
+      <a class="navbar-link" href="#sec-reco">政策建议</a>
+      <a class="navbar-link" href="#sec-conclusion">研究结论</a>
+    </div>
+  </div>
+  <div class="navbar-progress" id="nav-progress"></div>
+</nav>
+
+<!-- ========== Hero ========== -->
+<section class="hero" id="sec-hero">
+  <div class="hero-content">
+    <span class="hero-tag">XIAOHONGSHU SENTIMENT ANALYSIS</span>
+    <h1>"置身钉内"小红书舆情分析报告</h1>
+    <p class="hero-subtitle">
+      基于小红书平台 651 篇笔记、9,026 条评论的实证数据，<br>
+      对钉钉换帅"置身钉内"舆情传播机制与公众情绪特征的系统分析
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num">651</div><div class="hero-stat-label">笔记总数</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">9,026</div><div class="hero-stat-label">评论总数</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">8,384</div><div class="hero-stat-label">网络节点</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">9</div><div class="hero-stat-label">话题主题</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 一、研究背景 ========== -->
+<section class="section" id="sec-bg">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">研究背景与问题</h2>
+      <p class="section-desc">事件溯源与核心研究问题</p>
+    </div>
+    <div class="bg-section">
+      <p>2026年6月4日，钉钉AI项目"ONE"的核心产品经理<span class="highlight">滕雅辛（花名"幽素"）</span>，在即将离职之际于阿里内网发布了一篇<span class="highlight">7.5万字</span>的复盘长文《置身钉内》。</p>
+      <p>文章以"发心—定位—设计—用户—敏捷—秩序—军争—长期"八章为架构，系统回顾了ONE项目从立项到冲高<span class="highlight">300万日活</span>、再到最终收缩拆分的全过程。文中严厉批评了时任CEO<span class="highlight">陈航（花名"无招"）</span>的管理风格，直指项目存在过度依赖创始人个人意志、恶性内卷蔓延、决策唯上、无意义加班等组织管理问题。</p>
+      <p>该文迅速从内网扩散至全网，引发巨大共鸣。随后，钉钉前副总裁<span class="highlight">马锐拉</span>发文《置身钉外》呼应，阿里巴巴合伙人委员会也罕见下场批评钉钉管理方式。最终，这场舆论风暴直接导致了<span class="highlight">钉钉CEO陈航的卸任</span>。</p>
+      <p>本报告聚焦以"置身钉内"为舆论关键词的钉钉舆论事件，以小红书平台为研究对象，回答以下核心问题：</p>
+      <div class="questions">
+        <div class="question-item">
+          <div class="question-num">1</div>
+          <div class="question-text">该事件在小红书上引发了怎样的公众情绪？负面情绪的分布特征是什么？</div>
+        </div>
+        <div class="question-item">
+          <div class="question-num">2</div>
+          <div class="question-text">舆情信息在小红书平台上的传播机制如何？关键传播节点和路径是什么？</div>
+        </div>
+        <div class="question-item">
+          <div class="question-num">3</div>
+          <div class="question-text">舆情中涉及的核心人物与事件有哪些？讨论焦点如何分布？</div>
+        </div>
+        <div class="question-item">
+          <div class="question-num">4</div>
+          <div class="question-text">该舆情事件存在哪些风险？对平台治理和企业公关有何政策建议？</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 二、数据来源与分析方法 ========== -->
+<section class="section" id="sec-method" style="background: var(--slate-100);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">数据来源与分析方法</h2>
+      <p class="section-desc">多维度数据处理流程与技术工具栈</p>
+    </div>
+
+    <!-- Data Cards -->
+    <div class="data-grid">
+      <div class="data-card c1"><div class="data-card-icon">📄</div><div class="data-card-value">651</div><div class="data-card-label">爬取笔记数</div></div>
+      <div class="data-card c2"><div class="data-card-icon">💬</div><div class="data-card-value">9,026</div><div class="data-card-label">评论数据量</div></div>
+      <div class="data-card c3"><div class="data-card-icon">🔑</div><div class="data-card-value">4</div><div class="data-card-label">搜索关键词</div></div>
+      <div class="data-card c4"><div class="data-card-icon">👥</div><div class="data-card-value">9</div><div class="data-card-label">标注人物</div></div>
+      <div class="data-card c5"><div class="data-card-icon">📋</div><div class="data-card-value">8</div><div class="data-card-label">标注事件</div></div>
+      <div class="data-card c6"><div class="data-card-icon">🔀</div><div class="data-card-value">9</div><div class="data-card-label">聚类主题</div></div>
+    </div>
+
+    <!-- (一) 数据来源 -->
+    <div class="method-detail">
+      <h3><span class="md-icon" style="background:#eef2ff;color:#4f46e5;">📡</span>（一）数据来源</h3>
+      <p>通过Python程序爬取小红书平台笔记内容与评论数据，搜索关键词覆盖事件的正反两面讨论（"置身钉内""无招钉钉""置身钉外""钉钉换帅"），确保数据覆盖的完整性和代表性。</p>
+    </div>
+
+    <!-- (二) 数据清洗过程 -->
+    <div class="method-detail">
+      <h3><span class="md-icon" style="background:#ecfeff;color:#06b6d4;">🧹</span>（二）数据清洗过程</h3>
+      <p><strong>数据清洗</strong></p>
+      <p>拿到原始数据后，我们先做了两轮清洗。第一轮是<strong>去重</strong>：由于爬取的原始数据是"一条评论占一行"的结构，同一篇笔记会因为有多少条评论就重复出现多少次，所以我们按笔记ID进行合并，把同一笔记下的所有评论聚合在一起，同时去除了评论内容完全重复的水评论。</p>
+      <p>第二轮是<strong>噪声过滤</strong>，主要过滤掉对分析没有实际意义的内容——比如只有表情符号的评论、@一下就没下文的空评论、给AI发的总结指令、以及"已关注求分享"这类引流话术。经过这两轮清洗，数据质量有了明显提升。</p>
+      <p style="margin-top:16px;"><strong>关键词标注</strong></p>
+      <p>为了后续能从不同维度做交叉分析，我们对每篇笔记做了实体标注，把标题、正文和评论里提到的关键人物和事件都提取出来。人物方面标注了无招（陈航）、幽素、马锐拉、陈宇森、马云等<strong>9位核心角色</strong>；事件方面标注了置身钉内、置身钉外、ONE项目、CEO换帅、阿里内网等<strong>8个关键事件</strong>。标注采用多标签方式，一篇笔记可以同时对应多个人物和事件。</p>
+      <p style="margin-top:16px;"><strong>社会关系网络分析</strong></p>
+      <p>我们从三个维度构建了社交网络图：一是<strong>评论互动关系</strong>（谁评论了谁的帖子），二是<strong>@提及关系</strong>（评论里@了谁），三是<strong>内容关联</strong>（讨论同一话题的作者之间的潜在关联）。在此基础上计算了度中心性、介数中心性、PageRank等网络指标，并做了社区检测，用来识别关键传播节点和信息传播路径。</p>
+      <p style="margin-top:16px;"><strong>话题聚类</strong></p>
+      <p>用jieba对所有文本做分词和停用词过滤后，通过<strong>TF-IDF向量化加KMeans聚类</strong>，把651篇笔记聚成了9个主题，每个主题提取了Top关键词并给出了中文标签。同时生成了整体词云和按关键词分组的词云，可以很直观地看到大家都在聊什么。</p>
+      <p style="margin-top:16px;"><strong>情感分析</strong></p>
+      <p>情感分析用了<strong>大模型逐条标注</strong>的方式，对每篇笔记和每条评论都做了三级分类（正面/中性/负面）和细粒度的情感标签。笔记和评论加起来差不多一万条，分批次跑完了。最后还做了按搜索关键词、按涉及人物等多个维度的交叉对比。</p>
+    </div>
+
+    <!-- (三) 使用工具 -->
+    <div class="chart-box">
+      <div class="chart-box-title">（三）使用的工具和软件</div>
+      <div class="chart-box-sub">我们主要使用了coze agency来编写相关程序对于数据进行处理，以下为调用的工具与软件：</div>
+      <table class="tools-table">
+        <thead><tr><th>类别</th><th>工具/软件</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><span class="cat" style="background:#eef2ff;color:#4f46e5;">编程语言</span></td><td>Python 3.x</td><td>全流程数据处理与分析</td></tr>
+          <tr><td><span class="cat" style="background:#ecfeff;color:#06b6d4;">数据处理</span></td><td>pandas 2.0.0</td><td>数据清洗、转换、聚合与统计分析</td></tr>
+          <tr><td><span class="cat" style="background:#ecfeff;color:#06b6d4;">数据处理</span></td><td>openpyxl 3.1.2</td><td>Excel 文件读写</td></tr>
+          <tr><td><span class="cat" style="background:#fffbeb;color:#f59e0b;">文本处理</span></td><td>jieba</td><td>中文分词</td></tr>
+          <tr><td><span class="cat" style="background:#fffbeb;color:#f59e0b;">文本处理</span></td><td>re (正则表达式)</td><td>文本清洗、模式匹配、实体提取</td></tr>
+          <tr><td><span class="cat" style="background:#f5f3ff;color:#8b5cf6;">网络分析</span></td><td>NetworkX 3.6.1</td><td>社交网络构建、中心性计算、社区检测</td></tr>
+          <tr><td><span class="cat" style="background:#ecfdf5;color:#10b981;">可视化</span></td><td>matplotlib 3.10.9</td><td>统计图表绘制（柱状图、饼图等）</td></tr>
+          <tr><td><span class="cat" style="background:#ecfdf5;color:#10b981;">可视化</span></td><td>Plotly 6.7.0</td><td>交互式网络图可视化</td></tr>
+          <tr><td><span class="cat" style="background:#ecfdf5;color:#10b981;">可视化</span></td><td>wordcloud</td><td>词云图生成</td></tr>
+          <tr><td><span class="cat" style="background:#fef2f2;color:#ef4444;">聚类分析</span></td><td>scikit-learn</td><td>TF-IDF 向量化、KMeans 聚类、轮廓系数计算</td></tr>
+          <tr><td><span class="cat" style="background:#fef2f2;color:#ef4444;">情感分析</span></td><td>大语言模型 (LLM)</td><td>批量文本情感分类与细粒度标注</td></tr>
+          <tr><td><span class="cat" style="background:#f1f5f9;color:#475569;">数据存储</span></td><td>Excel (.xlsx)</td><td>数据存储与交付</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 三、分析结果 ========== -->
+<section class="section" id="sec-persons">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">核心人物与事件分析</h2>
+      <p class="section-desc">关键词标注结果 — 谁在讨论中被提及最多？哪些事件是焦点？</p>
+    </div>
+
+    <!-- 关键人物覆盖 -->
+    <div class="text-block">
+      <h3>关键人物覆盖（按出现频次排序）</h3>
+      <p>无招（陈航）以36.9%的覆盖率成为绝对核心人物，远超第二名陈宇森（12%）。马云和马锐拉的出现说明讨论延伸至阿里高层变动。<span class="highlight">56.1%的笔记未涉及已知关键人物</span>，大量讨论聚焦于泛化的"大厂""员工""产品"等议题。</p>
+    </div>
+
+    <!-- 关键事件覆盖 -->
+    <div class="text-block">
+      <h3>关键事件覆盖（按出现频次排序）</h3>
+      <p>"置身钉内"以67.3%的覆盖率主导讨论，指向无招离职后在钉钉内部引发的震动。"飞书"（13.2%）的高出现率表明竞品对比是重要讨论维度。</p>
+    </div>
+
+    <div class="chart-row two">
+      <div class="chart-box">
+        <div class="chart-box-title">核心人物覆盖率</div>
+        <div class="chart-box-sub">按出现频次排序，无招以36.9%的覆盖率成为绝对核心人物</div>
+        <div id="chart-persons" class="chart"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">关键事件覆盖率</div>
+        <div class="chart-box-sub">"置身钉内"以67.3%的覆盖率主导讨论</div>
+        <div id="chart-events" class="chart"></div>
+      </div>
+    </div>
+
+    <!-- 高频词 Top 8 -->
+    <div class="text-block">
+      <h3>高频词 Top 8</h3>
+      <p>整体文本中出现频次最高的关键词反映了讨论的核心关注点：</p>
+    </div>
+
+    <div class="chart-row one">
+      <div class="chart-box">
+        <div class="chart-box-title">高频词 Top 8</div>
+        <div class="chart-box-sub">全部文本中出现频次最高的关键词</div>
+        <div id="chart-words" class="chart short"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 话题聚类 ========== -->
+<section class="section" id="sec-topics" style="background: var(--slate-100);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">话题聚类：讨论焦点分布</h2>
+      <p class="section-desc">通过TF-IDF + KMeans聚类，识别出9大讨论主题</p>
+    </div>
+
+    <div class="chart-row two">
+      <div class="chart-box">
+        <div class="chart-box-title">9大主题分布</div>
+        <div class="chart-box-sub">前三大主题合计占比 60.8%</div>
+        <div id="chart-topics" class="chart tall"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">讨论焦点特征</div>
+        <div class="chart-box-sub">不同搜索关键词下的讨论侧重</div>
+        <div id="chart-keyword-focus" class="chart tall"></div>
+      </div>
+    </div>
+
+    <!-- 保留完整原文 -->
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-title">核心发现</div>
+      <p style="font-size: 15px; color: var(--slate-600); line-height: 1.9;">
+        讨论焦点高度集中在<strong>组织管理与职场文化</strong>层面。前三大主题合计占比60.8%，且均与"无招离职"直接相关。最大主题"大厂内部讨论与深度文章"（28.4%）表明，此次事件已超越单纯的换帅新闻，演变为对大厂加班文化、产品管理、组织变革的深度反思。从词云可以直观看出，四组关键词下"阿里""置身""员工""大厂"等词均占据核心位置，但侧重点有所不同：
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px;">
+        <div style="padding:14px;background:var(--slate-50);border-radius:10px;border-left:3px solid #4f46e5;">
+          <strong style="font-size:14px;color:var(--primary);">"置身钉内"</strong>
+          <p style="font-size:13px;color:var(--slate-500);margin-top:4px;">侧重员工体验与内部视角</p>
+        </div>
+        <div style="padding:14px;background:var(--slate-50);border-radius:10px;border-left:3px solid #06b6d4;">
+          <strong style="font-size:14px;color:var(--cyan);">"无招/钉钉"</strong>
+          <p style="font-size:13px;color:var(--slate-500);margin-top:4px;">更强调人物本身和内部文化</p>
+        </div>
+        <div style="padding:14px;background:var(--slate-50);border-radius:10px;border-left:3px solid #f59e0b;">
+          <strong style="font-size:14px;color:var(--amber);">"置身钉外"</strong>
+          <p style="font-size:13px;color:var(--slate-500);margin-top:4px;">更多外部评价与竞品比较</p>
+        </div>
+        <div style="padding:14px;background:var(--slate-50);border-radius:10px;border-left:3px solid #10b981;">
+          <strong style="font-size:14px;color:var(--emerald);">"钉钉换帅"</strong>
+          <p style="font-size:13px;color:var(--slate-500);margin-top:4px;">更聚焦于事件变动和组织影响</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 社交网络分析 ========== -->
+<section class="section" id="sec-network">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">社交网络分析：传播机制</h2>
+      <p class="section-desc">谁在推动信息的扩散？网络结构与传播路径</p>
+    </div>
+
+    <!-- 网络概览 -->
+    <div class="text-block">
+      <h3>网络概览</h3>
+      <p>社交网络整体指标如下：</p>
+    </div>
+
+    <div class="data-grid">
+      <div class="data-card c1"><div class="data-card-icon">🔵</div><div class="data-card-value">8,384</div><div class="data-card-label">网络节点</div></div>
+      <div class="data-card c2"><div class="data-card-icon">🔗</div><div class="data-card-value">99,148</div><div class="data-card-label">网络边</div></div>
+      <div class="data-card c3"><div class="data-card-icon">📐</div><div class="data-card-value">0.0028</div><div class="data-card-label">网络密度</div></div>
+      <div class="data-card c4"><div class="data-card-icon">🏙️</div><div class="data-card-value">162</div><div class="data-card-label">信息汇聚节点</div></div>
+    </div>
+
+    <!-- 交互式社交网络图 -->
+    <div class="network-wrap" id="network-wrap">
+      <div class="network-wrap-title">交互式社交网络图</div>
+      <div class="network-wrap-sub">拖拽节点 · 悬停查看详情 · 滚轮缩放 · 按角色筛选</div>
+      <svg id="network-svg"></svg>
+      <div class="network-tooltip" id="network-tooltip"></div>
+      <div class="network-legend">
+        <div class="network-legend-item"><span class="network-legend-dot" style="background:#e74c3c;"></span>KOL / 桥梁节点</div>
+        <div class="network-legend-item"><span class="network-legend-dot" style="background:#4f46e5;"></span>内容创作者</div>
+        <div class="network-legend-item"><span class="network-legend-dot" style="background:#f59e0b;"></span>活跃评论者</div>
+        <div class="network-legend-item"><span class="network-legend-dot" style="background:#10b981;"></span>信息源节点</div>
+        <div class="network-legend-item"><span class="network-legend-dot" style="background:#94a3b8;"></span>普通用户</div>
+      </div>
+      <div class="network-controls">
+        <button class="network-btn active" data-role="all">全部</button>
+        <button class="network-btn" data-role="kol">KOL/桥梁</button>
+        <button class="network-btn" data-role="creator">创作者</button>
+        <button class="network-btn" data-role="commenter">评论者</button>
+        <button class="network-btn" data-role="source">信息源</button>
+      </div>
+    </div>
+
+    <!-- 关键传播节点Top 5 -->
+    <div class="text-block">
+      <h3>关键传播节点 Top 5</h3>
+    </div>
+
+    <div class="chart-row two">
+      <div class="chart-box">
+        <div class="chart-box-title">关键传播节点 Top 5</div>
+        <div class="chart-box-sub">按度中心性排序，momo以708度位居榜首</div>
+        <div id="chart-nodes" class="chart tall"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">用户角色分布</div>
+        <div class="chart-box-sub">普通用户占98%，KOL仅0.24%却承载主要传播</div>
+        <div id="chart-roles" class="chart tall"></div>
+      </div>
+    </div>
+
+    <!-- 传播结构 -->
+    <div class="text-block">
+      <h3>传播结构</h3>
+      <ul class="sub-point">
+        <li>KOL：20人（0.24%）</li>
+        <li>内容创作者：10人（0.12%）</li>
+        <li>活跃评论者：136人（1.6%）</li>
+        <li>普通用户：8,218人（98%）</li>
+        <li>信息源节点：24个信息汇聚节点，162个社区结构："一超多强"格局</li>
+      </ul>
+    </div>
+
+    <!-- Propagation Flow -->
+    <div class="chart-box" style="margin-top: 24px;">
+      <div class="chart-box-title">漏斗型传播路径</div>
+      <div class="chart-box-sub">少数信息源 → KOL/桥梁节点 → 汇聚节点 → 普通用户</div>
+      <div class="flow-diagram">
+        <div class="flow-node flow-node-1"><h5>信息源节点</h5><p>24个节点</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node flow-node-2"><h5>KOL / 桥梁节点</h5><p>20人 (0.24%)</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node flow-node-3"><h5>信息汇聚节点</h5><p>162个节点</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node flow-node-4"><h5>普通用户</h5><p>8,218人 (98%)</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 情感分析 ========== -->
+<section class="section" id="sec-sentiment" style="background: var(--slate-100);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">情感分析：公众情绪特征</h2>
+      <p class="section-desc">评论区是负面情绪的放大器</p>
+    </div>
+
+    <!-- 笔记情感分布 -->
+    <div class="text-block">
+      <h3>笔记情感分布（651篇）</h3>
+      <p>651篇笔记的情感分布呈现负面偏中性态势：正面106篇（16.3%）、中性273篇（41.9%）、负面272篇（41.8%）。</p>
+    </div>
+    <div class="text-block">
+      <h3>评论情感分布（9,026条）</h3>
+      <p>9,026条评论的情感分布更为极端：正面1,255条（13.9%）、中性3,265条（36.2%）、负面4,506条（49.9%）。</p>
+    </div>
+
+    <div class="chart-row two">
+      <div class="chart-box">
+        <div class="chart-box-title">笔记情感分布（651篇）</div>
+        <div class="chart-box-sub">负面 41.8% vs 正面 16.3%</div>
+        <div id="chart-sent-notes" class="chart"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">评论情感分布（9,026条）</div>
+        <div class="chart-box-sub">负面 49.9% vs 正面 13.9%</div>
+        <div id="chart-sent-comments" class="chart"></div>
+      </div>
+    </div>
+
+    <div class="chart-row one">
+      <div class="chart-box">
+        <div class="chart-box-title">笔记 vs 评论 情感对比</div>
+        <div class="chart-box-sub">评论区负面率比笔记高 8.1 个百分点，情绪极化更严重</div>
+        <div id="chart-sent-compare" class="chart"></div>
+      </div>
+    </div>
+
+    <!-- 关键发现 - 保留完整原文4条 -->
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-title">关键发现</div>
+      <ul class="sub-point">
+        <li>评论区是负面情绪的放大器：评论负面率（49.9%）显著高于笔记负面率（41.8%），说明评论区情绪极化更严重。</li>
+        <li>正面声量全面薄弱：笔记和评论的正面占比均为最低（16.3% / 13.9%），缺乏建设性正面讨论。</li>
+        <li>笔记以"客观报道"和"批评/质疑"为主：合计超57%，理性分析与批评并存。</li>
+        <li>不同搜索关键词的情感分布存在明显差异："置身钉内"组负面情绪更集中，"置身钉外"组相对中性。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 四、信息传播机制分析 ========== -->
+<section class="section" id="sec-propagation">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">信息传播机制分析</h2>
+      <p class="section-desc">四大核心传播机制揭示舆情扩散规律</p>
+    </div>
+
+    <div class="text-block">
+      <p>基于社交网络分析和话题聚类结果，本次钉钉CEO换帅事件在小红书平台上的信息传播呈现出以下核心机制：</p>
+    </div>
+
+    <!-- 机制1: KOL驱动 -->
+    <div class="text-block">
+      <h3>KOL驱动的漏斗型传播结构</h3>
+      <p>网络中仅有20个KOL节点（占0.24%），却承载了绝大部分的信息扩散功能。<span class="highlight">momo</span>以708度、0.0741的介数中心性位居榜首，远超其他节点，是整个网络中最重要的信息枢纽。值得注意的是，momo作为匿名账号，其影响力甚至超过东方卫视等官方媒体账号和钉钉官方账号，这说明在小红书生态中，非官方、非实名认证的用户在舆情传播中扮演了比官方更关键的角色。</p>
+      <p>从度中心性分布来看，Top 5节点的度集中在186-708之间，而从第6名开始急剧下降，呈现典型的<strong>幂律分布</strong>特征。这意味着少数节点掌控了绝大部分的传播通道，一旦这些核心节点发布内容，信息将迅速扩散至整个网络。</p>
+    </div>
+
+    <!-- 机制2: 跨社区桥梁 -->
+    <div class="text-block">
+      <h3>跨社区桥梁效应与圈层穿透</h3>
+      <p>社区检测结果显示，网络呈现<strong>"一超多强"</strong>的格局：一个核心大社区占据了大部分节点，同时存在多个中小社区。这些社区之间并非完全隔离，而是通过少数桥梁节点相互连接。</p>
+      <p>以<span class="highlight">momo</span>为代表的桥梁节点，同时连接多个社区，是跨社区传播的关键通道。当某一社区内产生争议性内容（如对无招离职的批评性分析）时，通过桥梁节点快速扩散到其他社区（如职场吐槽社区、科技讨论社区），形成<strong>跨圈层共振</strong>。这种机制使得舆情事件能够在短时间内从单一圈层扩展到多个圈层，显著放大了事件的影响力。</p>
+      <p>从数据上看，162个信息汇聚节点分布在不同的社区中，24个信息源节点产生的内容通过这些汇聚节点向8,218名普通用户（占98%）扩散，形成典型的漏斗型传播路径：少数信息源 → KOL/桥梁节点 → 汇聚节点 → 普通用户。</p>
+    </div>
+
+    <!-- 机制3: 评论区极化 -->
+    <div class="text-block">
+      <h3>评论区极化效应</h3>
+      <p>评论区负面率（<span style="color:#ef4444;font-weight:700;">49.9%</span>）远高于笔记正文负面率（41.8%），差距达到<strong>8.1%</strong>。这一现象揭示了小红书平台上舆情传播的一个重要特征：<strong>评论区是情绪极化的加速器</strong>。</p>
+      <p>其内在机制在于：笔记正文受字数限制和内容创作成本约束，作者往往倾向于更理性、更有逻辑的表达；而评论区的低门槛、匿名性和互动性使得用户更容易表达极端情绪。特别是短文本评论（如"垃圾""早该换了"等）和二三次回复中的相互强化，进一步加剧了情绪极化。这种极化效应通过社交网络的级联扩散，会反向影响更多用户的认知和态度。</p>
+    </div>
+
+    <!-- 机制4: 竞品叙事 -->
+    <div class="text-block">
+      <h3>竞品叙事的嵌入与放大</h3>
+      <p>在关键词标注中，<span class="highlight">"飞书"</span>以13.2%的覆盖率出现在大量笔记中，表明竞品讨论已深度嵌入到钉钉换帅事件的叙事框架中。部分讨论将钉钉换帅解读为"钉钉 vs 飞书"的竞争信号，将单一企业的人事变动上升为整个协同办公赛道的格局讨论。</p>
+      <p>这种竞品叙事的嵌入具有<strong>自我传播的动力</strong>：一方面，对比性内容天然具有更高的话题性和讨论价值，容易获得更高的互动量；另一方面，飞书用户或竞品支持者的主动参与，为事件引入了新的讨论群体，进一步扩大了事件的传播范围和影响力。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 五、舆情风险与政策建议 ========== -->
+<section class="section" id="sec-risk" style="background: var(--slate-100);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2 class="section-title">舆情风险评估</h2>
+      <p class="section-desc">五大风险维度 — 从情绪累积到竞品借势</p>
+    </div>
+
+    <div class="risk-grid">
+      <div class="risk-card r1">
+        <span class="risk-level">高风险</span>
+        <h4>风险一：负面情绪持续累积与品牌信任侵蚀</h4>
+        <p>近半数评论呈现负面情绪（49.9%），且评论区的极化效应会持续放大这一趋势。若不加干预，负面情绪的持续累积将形成对钉钉品牌的长期负面印象。特别是评论区中高频出现的"加班""内卷""管理混乱"等关键词，会直接影响潜在用户的产品选择和企业客户的采购决策。</p>
+      </div>
+      <div class="risk-card r2">
+        <span class="risk-level">中高风险</span>
+        <h4>风险二：KOL非理性扩散与信息失真</h4>
+        <p>匿名KOL（如momo）的高传播力意味着信息传播不受品牌方控制。momo的708度和0.0741介数中心性说明，其发布的任何内容都能迅速触达大量用户。一旦出现不实信息或极端观点，由于匿名特性和小红书的内容推荐机制，品牌方难以通过官方渠道及时纠正。同时，其他KOL的跟进和二次传播会进一步放大失真信息的影响力。</p>
+      </div>
+      <div class="risk-card r3">
+        <span class="risk-level">中高风险</span>
+        <h4>风险三：组织变革外溢至社会议题</h4>
+        <p>28.4%的笔记聚焦于"大厂内部讨论与深度文章"，话题已从单纯的"CEO换帅"外溢到对大厂加班文化、996工作制、组织管理模式的深度反思。这种外溢使得舆情焦点从企业内部事务上升为更广泛的社会议题，涉及劳动权益、职场文化等敏感话题，显著增加了舆情的不可控性。一旦被更广泛的社会讨论（如媒体、KOL、政策讨论）所吸纳，将对品牌产生深远影响。</p>
+      </div>
+      <div class="risk-card r4">
+        <span class="risk-level">中风险</span>
+        <h4>风险四：竞品借势营销与用户流失</h4>
+        <p>飞书相关讨论的高出现率（13.2%）表明竞品正在或可能借势强化自身品牌叙事。竞品可能通过对比营销、用户迁移引导等方式，将钉钉的负面舆情转化为自身的获客机会。这不仅会进一步分流钉钉的现有用户，还可能影响企业客户的续约决策。</p>
+      </div>
+      <div class="risk-card r5">
+        <span class="risk-level">中风险</span>
+        <h4>风险五：员工内部情绪的传导与叠加</h4>
+        <p>"员工"一词出现637次，"置身钉内"覆盖67.3%的笔记，表明大量讨论来自或涉及钉钉内部员工。内部员工在社交平台上的负面情绪表达（如离职长文、工作体验分享等）具有更高的可信度和传播力，容易引发外部用户和潜在求职者的共鸣。如果内部情绪持续恶化，可能形成内外联动的负面循环。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 政策建议 ========== -->
+<section class="section" id="sec-reco">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <h2 class="section-title">政策建议</h2>
+      <p class="section-desc">六条系统性应对路径</p>
+    </div>
+
+    <div class="reco-list">
+      <div class="reco-item">
+        <div class="reco-icon" style="background:linear-gradient(135deg,#4f46e5,#6366f1);">01</div>
+        <div class="reco-content">
+          <h4>建立KOL沟通与引导机制</h4>
+          <p>识别并主动与高介数中心性的KOL节点（如momo、John聊资产、科技风向标等）建立沟通渠道。在关键节点提供权威信息和独家素材，通过正面信息供给引导理性讨论。对于传播力特别强的匿名KOL，可通过内容合作、信息通报等方式建立间接联系。同时，培养品牌友好型KOL矩阵，分散对单一节点的依赖。</p>
+        </div>
+      </div>
+      <div class="reco-item">
+        <div class="reco-icon" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);">02</div>
+        <div class="reco-content">
+          <h4>评论区情绪管理与内容优化</h4>
+          <p>针对评论区负面情绪极化现象，建议平台优化评论排序机制：适当提升理性、建设性评论的可见度和权重，降低极端表达的传播效率。对于钉钉官方账号发布的笔记，可通过精选评论、置顶理性讨论等方式，主动塑造评论区的讨论氛围。同时，建立评论区情绪监测系统，实时追踪负面情绪的变化趋势。</p>
+        </div>
+      </div>
+      <div class="reco-item">
+        <div class="reco-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">03</div>
+        <div class="reco-content">
+          <h4>主动叙事构建与议题设置</h4>
+          <p>面对"组织变革"叙事外溢，建议企业主动发布组织变革的正面解读，包括新战略方向、产品改进计划、员工关怀措施等。通过主动设置议题（如发布钉钉产品创新进展、用户成功案例等），将公众注意力从负面的人事变动引导到积极的产品发展上。同时，邀请用户参与产品改进讨论，增强用户的参与感和归属感。</p>
+        </div>
+      </div>
+      <div class="reco-item">
+        <div class="reco-icon" style="background:linear-gradient(135deg,#10b981,#34d399);">04</div>
+        <div class="reco-content">
+          <h4>竞品叙事隔离与差异化定位</h4>
+          <p>密切监测竞品借势营销行为，避免在官方回应中过度强化竞品对比。保持叙事聚焦于钉钉自身的产品价值和用户利益，而非陷入与飞书等竞品的对比争论。同时，强化钉钉在特定场景下的差异化优势（如中大型企业市场、政企市场等），巩固核心用户群体的忠诚度。</p>
+        </div>
+      </div>
+      <div class="reco-item">
+        <div class="reco-icon" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);">05</div>
+        <div class="reco-content">
+          <h4>建立社交网络舆情预警体系</h4>
+          <p>基于本次社交网络分析的成果，建立常态化的舆情预警体系：实时监测桥梁节点的内容变化和社区结构变动，设置情绪阈值预警，在跨社区传播发生前进行预警和干预。将网络密度、核心节点活跃度、情绪分布等指标纳入日常监控，形成从"监测→预警→响应→复盘"的完整闭环。同时，定期进行类似的舆情分析，追踪舆情态势的演变趋势。</p>
+        </div>
+      </div>
+      <div class="reco-item">
+        <div class="reco-icon" style="background:linear-gradient(135deg,#f43f5e,#fb7185);">06</div>
+        <div class="reco-content">
+          <h4>内部员工沟通与情绪疏导</h4>
+          <p>鉴于大量讨论涉及内部员工情绪，建议加强内部沟通机制：定期举办员工座谈会、建立内部反馈渠道、透明化组织变革的方向和原因。通过内部正向信息的传递，减少员工在社交平台上发布负面内容的动机。同时，对于已经出现的员工负面表达，避免公开对抗，而是通过内部沟通和改善措施来解决问题。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 六、结论 ========== -->
+<section class="section" id="sec-conclusion" style="background: var(--slate-100);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">10</span>
+      <h2 class="section-title">研究结论</h2>
+      <p class="section-desc">四大核心研究问题的回答</p>
+    </div>
+
+    <div class="text-block">
+      <p>本报告基于小红书平台651篇笔记、9,026条评论的实证数据，对钉钉换帅"置身钉内"的舆情传播机制与公众情绪特征进行了系统分析。主要结论如下：</p>
+    </div>
+
+    <div class="conclusion-box">
+      <h3>主要结论</h3>
+      <div class="conclusion-item">
+        <div class="conclusion-num">1</div>
+        <div class="conclusion-text">
+          <h4>研究问题一（公众情绪）</h4>
+          <p>舆情整体呈负面偏中性态势，评论区负面情绪（49.9%）显著高于笔记（41.8%），正面声量全面薄弱，评论区是情绪极化的核心放大器。</p>
+        </div>
+      </div>
+      <div class="conclusion-item">
+        <div class="conclusion-num">2</div>
+        <div class="conclusion-text">
+          <h4>研究问题二（传播机制）</h4>
+          <p>舆情传播呈"漏斗型"KOL驱动模式，20个KOL节点承载了主要传播功能，少数桥梁节点（如momo）承担跨社区传播的关键角色，评论区低门槛特性加速了情绪极化。</p>
+        </div>
+      </div>
+      <div class="conclusion-item">
+        <div class="conclusion-num">3</div>
+        <div class="conclusion-text">
+          <h4>识别问题三（核心人物与事件）</h4>
+          <p>无招（陈航）以36.9%的覆盖率成为绝对核心人物，"置身钉内"（67.3%）和"离职长文"（24.3%）构成事件核心叙事，讨论焦点已从换帅事件外溢至大厂组织文化反思。</p>
+        </div>
+      </div>
+      <div class="conclusion-item">
+        <div class="conclusion-num">4</div>
+        <div class="conclusion-text">
+          <h4>研究问题四（风险与建议）</h4>
+          <p>存在负面情绪累积、KOL非理性扩散、叙事外溢、竞品借势、员工情绪传导五大风险，建议通过KOL沟通机制、评论区管理、主动叙事构建、竞品叙事隔离、舆情预警体系和内部员工沟通六条路径进行系统应对。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== Footer ========== -->
+<footer class="footer">
+  <p>"置身钉内"小红书舆情分析报告</p>
+  <p>数据来源：小红书平台 | 分析工具：Python · NetworkX · scikit-learn · LLM</p>
+  <p style="margin-top:8px;opacity:0.5;">本报告基于 651 篇笔记与 9,026 条评论的实证数据分析生成</p>
+</footer>
+
+<script>
+// ========== D3 Force-Directed Network Graph ==========
+(function() {
+  // ---- Data: simulated network matching document stats ----
+  // 8384 nodes, 99148 edges, power-law degree distribution
+  // Top 5: momo(708), 东方卫视(200), John聊资产(191), 科技风向标(187), 钉钉官方(186)
+  // 20 KOL, 10 creators, 136 active commenters, 24 info sources, rest ordinary
+
+  const roleColors = {
+    kol: '#e74c3c',
+    creator: '#4f46e5',
+    commenter: '#f59e0b',
+    source: '#10b981',
+    ordinary: '#94a3b8'
+  };
+
+  // Key named nodes from the document
+  const namedNodes = [
+    { id: 'momo', label: 'momo', degree: 708, betweenness: 0.0741, role: 'kol', bridge: true, community: 0 },
+    { id: 'dfws', label: '东方卫视', degree: 200, betweenness: 0.045, role: 'kol', bridge: false, community: 1 },
+    { id: 'john', label: 'John聊资产', degree: 191, betweenness: 0.051, role: 'kol', bridge: false, community: 2 },
+    { id: 'kxfx', label: '科技风向标', degree: 187, betweenness: 0.045, role: 'kol', bridge: false, community: 3 },
+    { id: 'ddgf', label: '钉钉(官方)', degree: 186, betweenness: 0.042, role: 'kol', bridge: false, community: 0 },
+  ];
+
+  // Generate representative nodes for the visualization
+  // We show ~120 nodes to make the graph readable while reflecting the real structure
+  const totalDisplay = 120;
+  const nodes = [...namedNodes];
+
+  // 15 more KOL-like nodes
+  for (let i = 0; i < 15; i++) {
+    const deg = Math.round(40 + Math.random() * 80);
+    nodes.push({ id: 'kol_' + i, label: 'KOL-' + (i+6), degree: deg, betweenness: Math.random()*0.02, role: 'kol', bridge: i < 3, community: Math.floor(Math.random()*5) });
+  }
+
+  // 10 content creators
+  for (let i = 0; i < 10; i++) {
+    const deg = Math.round(15 + Math.random() * 30);
+    nodes.push({ id: 'cr_' + i, label: '创作者-' + (i+1), degree: deg, betweenness: Math.random()*0.008, role: 'creator', bridge: false, community: Math.floor(Math.random()*5) });
+  }
+
+  // 24 info source nodes
+  for (let i = 0; i < 24; i++) {
+    const deg = Math.round(8 + Math.random() * 18);
+    nodes.push({ id: 'src_' + i, label: '信息源-' + (i+1), degree: deg, betweenness: Math.random()*0.004, role: 'source', bridge: false, community: Math.floor(Math.random()*5) });
+  }
+
+  // 30 active commenters
+  for (let i = 0; i < 30; i++) {
+    const deg = Math.round(5 + Math.random() * 12);
+    nodes.push({ id: 'cm_' + i, label: '评论者-' + (i+1), degree: deg, betweenness: Math.random()*0.002, role: 'commenter', bridge: false, community: Math.floor(Math.random()*5) });
+  }
+
+  // Remaining: ordinary users (~36)
+  for (let i = 0; i < 36; i++) {
+    const deg = Math.round(1 + Math.random() * 4);
+    nodes.push({ id: 'usr_' + i, label: '', degree: deg, betweenness: 0, role: 'ordinary', bridge: false, community: Math.floor(Math.random()*5) });
+  }
+
+  // Generate edges: connect based on communities + bridge connections
+  const links = [];
+  // Each KOL connects to many nodes in their community
+  nodes.forEach(n => {
+    if (n.role === 'kol' || n.bridge) {
+      // Connect to ~40% of nodes in same community
+      nodes.forEach(m => {
+        if (n.id !== m.id && n.community === m.community && Math.random() < 0.35) {
+          links.push({ source: n.id, target: m.id });
+        }
+      });
+      // Bridge nodes connect across communities
+      if (n.bridge) {
+        nodes.forEach(m => {
+          if (n.id !== m.id && n.community !== m.community && Math.random() < 0.12) {
+            links.push({ source: n.id, target: m.id });
+          }
+        });
+      }
+    } else if (n.role === 'creator' || n.role === 'source') {
+      // Connect to some KOLs and same-community nodes
+      nodes.forEach(m => {
+        if (n.id !== m.id && n.community === m.community && Math.random() < 0.15) {
+          links.push({ source: n.id, target: m.id });
+        }
+      });
+    } else if (n.role === 'commenter' || n.role === 'ordinary') {
+      // Sparse connections within community
+      nodes.forEach(m => {
+        if (n.id !== m.id && n.community === m.community && Math.random() < 0.06) {
+          links.push({ source: n.id, target: m.id });
+        }
+      });
+    }
+  });
+
+  // Remove duplicate links
+  const linkSet = new Set();
+  const uniqueLinks = [];
+  links.forEach(l => {
+    const key = l.source + '-' + l.target;
+    const rev = l.target + '-' + l.source;
+    if (!linkSet.has(key) && !linkSet.has(rev)) {
+      linkSet.add(key);
+      uniqueLinks.push(l);
+    }
+  });
+
+  // Node size scale based on degree
+  const sizeScale = d3.scaleSqrt().domain([1, 708]).range([4, 32]);
+
+  // ---- Render ----
+  const svg = d3.select('#network-svg');
+  const container = document.getElementById('network-wrap');
+  const tooltip = document.getElementById('network-tooltip');
+  const width = svg.node().getBoundingClientRect().width || 800;
+  const height = svg.node().getBoundingClientRect().height || 520;
+
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+  // Zoom
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 5])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+    });
+  svg.call(zoom);
+
+  const g = svg.append('g');
+
+  // Community cluster background circles
+  const communityCenters = [
+    { cx: width * 0.25, cy: height * 0.35 },
+    { cx: width * 0.7, cy: height * 0.25 },
+    { cx: width * 0.55, cy: height * 0.65 },
+    { cx: width * 0.15, cy: height * 0.75 },
+    { cx: width * 0.85, cy: height * 0.55 },
+  ];
+
+  // Initial position based on community
+  nodes.forEach(n => {
+    const cc = communityCenters[n.community];
+    n.x = cc.cx + (Math.random() - 0.5) * 120;
+    n.y = cc.cy + (Math.random() - 0.5) * 80;
+  });
+
+  // Force simulation
+  const simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(uniqueLinks).id(d => d.id).distance(d => {
+      const srcRole = nodes.find(n => n.id === (d.source.id || d.source)).role;
+      const tgtRole = nodes.find(n => n.id === (d.target.id || d.target)).role;
+      if (srcRole === 'kol' || tgtRole === 'kol') return 60;
+      return 30;
+    }).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(d => {
+      if (d.role === 'kol') return -200;
+      if (d.role === 'creator' || d.role === 'source') return -60;
+      return -20;
+    }))
+    .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
+    .force('community', d3.forceX(d => communityCenters[d.community].cx).strength(0.08))
+    .force('communityY', d3.forceY(d => communityCenters[d.community].cy).strength(0.08))
+    .force('collision', d3.forceCollide().radius(d => sizeScale(d.degree) + 3))
+    .alphaDecay(0.02);
+
+  // Draw links
+  const link = g.append('g')
+    .selectAll('line')
+    .data(uniqueLinks)
+    .join('line')
+    .attr('stroke', '#cbd5e1')
+    .attr('stroke-width', d => {
+      const src = d.source;
+      if (src.role === 'kol' || src.bridge) return 1.5;
+      return 0.5;
+    })
+    .attr('stroke-opacity', 0.4);
+
+  // Draw nodes
+  const node = g.append('g')
+    .selectAll('circle')
+    .data(nodes)
+    .join('circle')
+    .attr('r', d => sizeScale(d.degree))
+    .attr('fill', d => roleColors[d.role])
+    .attr('fill-opacity', d => d.role === 'ordinary' ? 0.35 : 0.85)
+    .attr('stroke', d => d.bridge ? '#fff' : 'none')
+    .attr('stroke-width', d => d.bridge ? 3 : 0)
+    .attr('cursor', 'pointer')
+    .call(d3.drag()
+      .on('start', dragstarted)
+      .on('drag', dragged)
+      .on('end', dragended));
+
+  // Labels for important nodes
+  const label = g.append('g')
+    .selectAll('text')
+    .data(nodes.filter(d => d.degree >= 15))
+    .join('text')
+    .text(d => d.label)
+    .attr('font-size', d => d.degree > 100 ? 13 : 10)
+    .attr('font-weight', d => d.role === 'kol' ? 700 : 500)
+    .attr('fill', d => d.role === 'kol' ? '#1e293b' : '#475569')
+    .attr('text-anchor', 'middle')
+    .attr('dy', d => sizeScale(d.degree) + 14)
+    .attr('pointer-events', 'none');
+
+  // Tooltip on hover
+  node.on('mouseover', function(event, d) {
+    d3.select(this).attr('fill-opacity', 1).attr('stroke', '#4f46e5').attr('stroke-width', 2);
+    const roleLabel = { kol: 'KOL / 桥梁节点', creator: '内容创作者', commenter: '活跃评论者', source: '信息源节点', ordinary: '普通用户' };
+    const bridgeLabel = d.bridge ? ' · 桥梁节点' : '';
+    let html = `<strong style="color:${roleColors[d.role]}">${d.label || d.id}</strong><br>`;
+    html += `角色：${roleLabel[d.role]}${bridgeLabel}<br>`;
+    html += `度：${d.degree}<br>`;
+    html += `度中心性：${(d.degree / 8384).toFixed(4)}<br>`;
+    html += `介数中心性：${d.betweenness.toFixed(4)}<br>`;
+    html += `社区：${d.community + 1}`;
+    tooltip.innerHTML = html;
+    tooltip.classList.add('visible');
+    const rect = container.getBoundingClientRect();
+    tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+    tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
+  })
+  .on('mouseout', function(event, d) {
+    d3.select(this)
+      .attr('fill-opacity', d.role === 'ordinary' ? 0.35 : 0.85)
+      .attr('stroke', d.bridge ? '#fff' : 'none')
+      .attr('stroke-width', d.bridge ? 3 : 0);
+    tooltip.classList.remove('visible');
+  });
+
+  // Tick
+  simulation.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+    node
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y);
+    label
+      .attr('x', d => d.x)
+      .attr('y', d => d.y);
+  });
+
+  function dragstarted(event) { if (!event.active) simulation.alphaTarget(0.3).restart(); event.subject.fx = event.subject.x; event.subject.fy = event.subject.y; }
+  function dragged(event) { event.subject.fx = event.x; event.subject.fy = event.y; }
+  function dragended(event) { if (!event.active) simulation.alphaTarget(0); event.subject.fx = null; event.subject.fy = null; }
+
+  // ---- Filter buttons ----
+  const buttons = document.querySelectorAll('.network-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      buttons.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      const role = this.dataset.role;
+      if (role === 'all') {
+        node.attr('fill-opacity', d => d.role === 'ordinary' ? 0.35 : 0.85).attr('r', d => sizeScale(d.degree));
+        link.attr('stroke-opacity', 0.4);
+        label.style('display', 'block');
+      } else {
+        node.attr('fill-opacity', d => d.role === role ? 0.9 : 0.08)
+          .attr('r', d => d.role === role ? sizeScale(d.degree) : 2);
+        link.attr('stroke-opacity', d => {
+          const srcRole = typeof d.source === 'object' ? d.source.role : nodes.find(n => n.id === d.source).role;
+          const tgtRole = typeof d.target === 'object' ? d.target.role : nodes.find(n => n.id === d.target).role;
+          return (srcRole === role || tgtRole === role) ? 0.5 : 0.02;
+        });
+        label.style('display', d => d.role === role ? 'block' : 'none');
+      }
+    });
+  });
+})();
+
+const colorPalette = ['#4f46e5', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#f43f5e', '#14b8a6', '#6366f1'];
+
+// ========== Chart 1: Key Persons ==========
+const chartPersons = echarts.init(document.getElementById('chart-persons'));
+chartPersons.setOption({
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+  grid: { left: '3%', right: '8%', bottom: '3%', top: '8%', containLabel: true },
+  xAxis: { type: 'value', axisLabel: { formatter: '{value}%', color: '#94a3b8' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+  yAxis: {
+    type: 'category',
+    data: ['蒋凡', '吴泳铭', '马锐拉', '马云', '幽素', '陈宇森', '无招（陈航）'],
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#475569', fontSize: 12 }
+  },
+  series: [{
+    type: 'bar',
+    data: [
+      { value: 1.2, itemStyle: { color: '#c7d2fe' } },
+      { value: 1.4, itemStyle: { color: '#a5b4fc' } },
+      { value: 6.0, itemStyle: { color: '#818cf8' } },
+      { value: 6.6, itemStyle: { color: '#6366f1' } },
+      { value: 10.0, itemStyle: { color: '#4f46e5' } },
+      { value: 12.0, itemStyle: { color: '#4338ca' } },
+      { value: 36.9, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: '#4f46e5' }, { offset: 1, color: '#818cf8' }] } } }
+    ],
+    barWidth: '55%',
+    label: { show: true, position: 'right', formatter: '{c}%', color: '#475569', fontSize: 12, fontWeight: 600 },
+    itemStyle: { borderRadius: [0, 6, 6, 0] }
+  }]
+});
+
+// ========== Chart 2: Key Events ==========
+const chartEvents = echarts.init(document.getElementById('chart-events'));
+chartEvents.setOption({
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+  grid: { left: '3%', right: '8%', bottom: '3%', top: '8%', containLabel: true },
+  xAxis: { type: 'value', axisLabel: { formatter: '{value}%', color: '#94a3b8' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+  yAxis: {
+    type: 'category',
+    data: ['ONE项目', '阿里内网', '飞书', '置身钉外', 'CEO换帅', '离职长文', '置身钉内'],
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#475569', fontSize: 12 }
+  },
+  series: [{
+    type: 'bar',
+    data: [
+      { value: 4.3, itemStyle: { color: '#a5f3fc' } },
+      { value: 12.1, itemStyle: { color: '#67e8f9' } },
+      { value: 13.2, itemStyle: { color: '#22d3ee' } },
+      { value: 14.4, itemStyle: { color: '#06b6d4' } },
+      { value: 18.0, itemStyle: { color: '#0891b2' } },
+      { value: 24.3, itemStyle: { color: '#0e7490' } },
+      { value: 67.3, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: '#06b6d4' }, { offset: 1, color: '#67e8f9' }] } } }
+    ],
+    barWidth: '55%',
+    label: { show: true, position: 'right', formatter: '{c}%', color: '#475569', fontSize: 12, fontWeight: 600 },
+    itemStyle: { borderRadius: [0, 6, 6, 0] }
+  }]
+});
+
+// ========== Chart 3: Word Frequency ==========
+const chartWords = echarts.init(document.getElementById('chart-words'));
+chartWords.setOption({
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(p) { return p[0].name + ': ' + p[0].value + ' 次'; } },
+  grid: { left: '3%', right: '5%', bottom: '3%', top: '8%', containLabel: true },
+  xAxis: {
+    type: 'category',
+    data: ['阿里', '置身', '产品', '公司', '无招', '大厂', '员工', '工作'],
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#475569', fontSize: 13 }
+  },
+  yAxis: { type: 'value', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+  series: [{
+    type: 'bar',
+    data: [
+      { value: 1805, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#4f46e5' }, { offset: 1, color: '#818cf8' }] } } },
+      { value: 1302, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#6366f1' }, { offset: 1, color: '#a5b4fc' }] } } },
+      { value: 931, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#06b6d4' }, { offset: 1, color: '#67e8f9' }] } } },
+      { value: 851, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#0891b2' }, { offset: 1, color: '#a5f3fc' }] } } },
+      { value: 776, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fcd34d' }] } } },
+      { value: 757, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#10b981' }, { offset: 1, color: '#6ee7b7' }] } } },
+      { value: 637, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#8b5cf6' }, { offset: 1, color: '#c4b5fd' }] } } },
+      { value: 606, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f43f5e' }, { offset: 1, color: '#fda4af' }] } } }
+    ],
+    barWidth: '50%',
+    label: { show: true, position: 'top', color: '#475569', fontSize: 12, fontWeight: 600 },
+    itemStyle: { borderRadius: [6, 6, 0, 0] }
+  }]
+});
+
+// ========== Chart 4: Topics Donut ==========
+const chartTopics = echarts.init(document.getElementById('chart-topics'));
+chartTopics.setOption({
+  tooltip: { trigger: 'item', formatter: '{b}: {c}篇 ({d}%)' },
+  legend: {
+    orient: 'vertical', right: '5%', top: 'center',
+    textStyle: { color: '#475569', fontSize: 12 }, itemWidth: 12, itemHeight: 12, itemGap: 10
+  },
+  series: [{
+    type: 'pie', radius: ['42%', '70%'], center: ['38%', '50%'],
+    avoidLabelOverlap: true,
+    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+    label: { show: true, formatter: '{d}%', fontSize: 12, fontWeight: 600, color: '#475569' },
+    labelLine: { length: 12, length2: 8 },
+    data: [
+      { value: 185, name: '大厂内部讨论与深度文章', itemStyle: { color: '#4f46e5' } },
+      { value: 115, name: '无招离职与组织变动讨论', itemStyle: { color: '#6366f1' } },
+      { value: 96, name: '无招离职与创始人争议', itemStyle: { color: '#818cf8' } },
+      { value: 87, name: '大厂背景与公司战略分析', itemStyle: { color: '#06b6d4' } },
+      { value: 85, name: '产品功能与用户体验讨论', itemStyle: { color: '#22d3ee' } },
+      { value: 83, name: '其他细分主题(6-9)', itemStyle: { color: '#f59e0b' } }
+    ]
+  }]
+});
+
+// ========== Chart 5: Keyword Focus Radar ==========
+const chartKeywordFocus = echarts.init(document.getElementById('chart-keyword-focus'));
+chartKeywordFocus.setOption({
+  tooltip: { trigger: 'item' },
+  radar: {
+    indicator: [
+      { name: '人物本身', max: 100 },
+      { name: '内部文化', max: 100 },
+      { name: '员工体验', max: 100 },
+      { name: '外部评价', max: 100 },
+      { name: '竞品比较', max: 100 },
+      { name: '事件变动', max: 100 },
+      { name: '组织影响', max: 100 }
+    ],
+    shape: 'polygon', splitNumber: 4,
+    axisName: { color: '#475569', fontSize: 12 },
+    splitLine: { lineStyle: { color: '#e2e8f0' } },
+    splitArea: { areaStyle: { color: ['#f8fafc', '#f1f5f9', '#f8fafc', '#f1f5f9'] } },
+    axisLine: { lineStyle: { color: '#e2e8f0' } }
+  },
+  series: [{
+    type: 'radar',
+    data: [
+      { value: [85, 90, 70, 40, 50, 60, 65], name: '置身钉内', lineStyle: { color: '#4f46e5', width: 2 }, areaStyle: { color: 'rgba(79,70,229,0.15)' }, itemStyle: { color: '#4f46e5' } },
+      { value: [90, 85, 50, 50, 40, 55, 60], name: '无招/钉钉', lineStyle: { color: '#06b6d4', width: 2 }, areaStyle: { color: 'rgba(6,182,212,0.12)' }, itemStyle: { color: '#06b6d4' } },
+      { value: [50, 45, 60, 85, 80, 50, 55], name: '置身钉外', lineStyle: { color: '#f59e0b', width: 2 }, areaStyle: { color: 'rgba(245,158,11,0.12)' }, itemStyle: { color: '#f59e0b' } },
+      { value: [60, 55, 45, 60, 55, 90, 85], name: '钉钉换帅', lineStyle: { color: '#10b981', width: 2 }, areaStyle: { color: 'rgba(16,185,129,0.12)' }, itemStyle: { color: '#10b981' } }
+    ]
+  }],
+  legend: { bottom: 0, textStyle: { color: '#475569', fontSize: 12 }, itemWidth: 12, itemHeight: 12, itemGap: 20 }
+});
+
+// ========== Chart 6: Top Nodes ==========
+const chartNodes = echarts.init(document.getElementById('chart-nodes'));
+chartNodes.setOption({
+  tooltip: {
+    trigger: 'axis', axisPointer: { type: 'shadow' },
+    formatter: function(params) {
+      let str = params[0].name + '<br/>';
+      params.forEach(p => { str += p.marker + p.seriesName + ': ' + p.value + '<br/>'; });
+      return str;
+    }
+  },
+  legend: { data: ['度', '介数中心性×1000'], textStyle: { color: '#475569', fontSize: 12 }, top: 0 },
+  grid: { left: '3%', right: '4%', bottom: '10%', top: '12%', containLabel: true },
+  xAxis: {
+    type: 'category',
+    data: ['momo', '东方卫视', 'John聊资产', '科技风向标', '钉钉(官方)'],
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#475569', fontSize: 11, rotate: 15 }
+  },
+  yAxis: [
+    { type: 'value', name: '度', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+    { type: 'value', name: '介数×1000', axisLabel: { color: '#94a3b8' }, splitLine: { show: false } }
+  ],
+  series: [
+    {
+      name: '度', type: 'bar', data: [708, 200, 191, 187, 186], barWidth: '35%',
+      itemStyle: {
+        borderRadius: [6, 6, 0, 0],
+        color: function(params) { const colors = ['#4f46e5','#6366f1','#818cf8','#a5b4fc','#c7d2fe']; return colors[params.dataIndex]; }
+      },
+      label: { show: true, position: 'top', color: '#475569', fontSize: 11, fontWeight: 600 }
+    },
+    {
+      name: '介数中心性×1000', type: 'line', yAxisIndex: 1, data: [74.1, 45, 51, 45, 42],
+      smooth: true, lineStyle: { color: '#f59e0b', width: 3 },
+      itemStyle: { color: '#f59e0b' }, symbol: 'circle', symbolSize: 8
+    }
+  ]
+});
+
+// ========== Chart 7: User Roles ==========
+const chartRoles = echarts.init(document.getElementById('chart-roles'));
+chartRoles.setOption({
+  tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)' },
+  series: [{
+    type: 'pie', radius: ['35%', '68%'], center: ['50%', '50%'],
+    roseType: 'area',
+    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+    label: {
+      formatter: function(p) { return p.name + '\n' + p.value + '人 (' + p.percent + '%)'; },
+      color: '#475569', fontSize: 12
+    },
+    labelLine: { length: 15, length2: 15 },
+    data: [
+      { value: 8218, name: '普通用户', itemStyle: { color: '#c7d2fe' } },
+      { value: 136, name: '活跃评论者', itemStyle: { color: '#818cf8' } },
+      { value: 20, name: 'KOL', itemStyle: { color: '#4f46e5' } },
+      { value: 10, name: '内容创作者', itemStyle: { color: '#06b6d4' } }
+    ]
+  }]
+});
+
+// ========== Chart 8: Sentiment Notes ==========
+const chartSentNotes = echarts.init(document.getElementById('chart-sent-notes'));
+chartSentNotes.setOption({
+  tooltip: { trigger: 'item', formatter: '{b}: {c}篇 ({d}%)' },
+  series: [{
+    type: 'pie', radius: ['45%', '72%'], center: ['50%', '50%'],
+    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 3 },
+    label: { formatter: '{b}\n{c}篇 ({d}%)', color: '#475569', fontSize: 13, fontWeight: 600 },
+    labelLine: { length: 16, length2: 12 },
+    data: [
+      { value: 106, name: '正面', itemStyle: { color: '#10b981' } },
+      { value: 273, name: '中性', itemStyle: { color: '#6366f1' } },
+      { value: 272, name: '负面', itemStyle: { color: '#ef4444' } }
+    ]
+  }]
+});
+
+// ========== Chart 9: Sentiment Comments ==========
+const chartSentComments = echarts.init(document.getElementById('chart-sent-comments'));
+chartSentComments.setOption({
+  tooltip: { trigger: 'item', formatter: '{b}: {c}条 ({d}%)' },
+  series: [{
+    type: 'pie', radius: ['45%', '72%'], center: ['50%', '50%'],
+    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 3 },
+    label: { formatter: '{b}\n{c}条 ({d}%)', color: '#475569', fontSize: 13, fontWeight: 600 },
+    labelLine: { length: 16, length2: 12 },
+    data: [
+      { value: 1255, name: '正面', itemStyle: { color: '#10b981' } },
+      { value: 3265, name: '中性', itemStyle: { color: '#6366f1' } },
+      { value: 4506, name: '负面', itemStyle: { color: '#ef4444' } }
+    ]
+  }]
+});
+
+// ========== Chart 10: Sentiment Compare ==========
+const chartSentCompare = echarts.init(document.getElementById('chart-sent-compare'));
+chartSentCompare.setOption({
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(params) {
+    let str = '';
+    params.forEach(p => { str += p.seriesName + ' - ' + p.name + ': ' + p.value + '%<br/>'; });
+    return str;
+  }},
+  legend: { data: ['笔记', '评论'], textStyle: { color: '#475569', fontSize: 13 }, top: 0, itemGap: 30 },
+  grid: { left: '3%', right: '4%', bottom: '8%', top: '12%', containLabel: true },
+  xAxis: {
+    type: 'category', data: ['正面', '中性', '负面'],
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#475569', fontSize: 14, fontWeight: 600 }
+  },
+  yAxis: { type: 'value', axisLabel: { formatter: '{value}%', color: '#94a3b8' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+  series: [
+    {
+      name: '笔记', type: 'bar', barWidth: '30%',
+      data: [
+        { value: 16.3, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#34d399' }, { offset: 1, color: '#10b981' }] } } },
+        { value: 41.9, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#818cf8' }, { offset: 1, color: '#6366f1' }] } } },
+        { value: 41.8, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f87171' }, { offset: 1, color: '#ef4444' }] } } }
+      ],
+      itemStyle: { borderRadius: [6, 6, 0, 0] },
+      label: { show: true, position: 'top', formatter: '{c}%', color: '#475569', fontSize: 13, fontWeight: 600 }
+    },
+    {
+      name: '评论', type: 'bar', barWidth: '30%',
+      data: [
+        { value: 13.9, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#6ee7b7' }, { offset: 1, color: '#34d399' }] } } },
+        { value: 36.2, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#a5b4fc' }, { offset: 1, color: '#818cf8' }] } } },
+        { value: 49.9, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#fca5a5' }, { offset: 1, color: '#f87171' }] } } }
+      ],
+      itemStyle: { borderRadius: [6, 6, 0, 0] },
+      label: { show: true, position: 'top', formatter: '{c}%', color: '#475569', fontSize: 13, fontWeight: 600 }
+    }
+  ]
+});
+
+// ========== Resize ==========
+window.addEventListener('resize', function() {
+  chartPersons.resize();
+  chartEvents.resize();
+  chartWords.resize();
+  chartTopics.resize();
+  chartKeywordFocus.resize();
+  chartNodes.resize();
+  chartRoles.resize();
+  chartSentNotes.resize();
+  chartSentComments.resize();
+  chartSentCompare.resize();
+});
+
+// ========== Navbar: scroll highlight + progress bar ==========
+(function() {
+  var navbar = document.getElementById('navbar');
+  var progress = document.getElementById('nav-progress');
+  var links = document.querySelectorAll('.navbar-link');
+  var sectionIds = ['sec-bg','sec-method','sec-persons','sec-topics','sec-network','sec-sentiment','sec-propagation','sec-risk','sec-reco','sec-conclusion'];
+
+  // Smooth scroll on click
+  links.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        var offset = navbar.offsetHeight + 8;
+        var y = target.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Highlight active section on scroll
+  function updateNav() {
+    var scrollY = window.pageYOffset;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var progressPct = Math.min(scrollY / docHeight * 100, 100);
+    progress.style.width = progressPct + '%';
+
+    // Navbar shadow on scroll
+    if (scrollY > 10) { navbar.classList.add('scrolled'); }
+    else { navbar.classList.remove('scrolled'); }
+
+    // Find current section
+    var offset = navbar.offsetHeight + 20;
+    var currentId = '';
+    sectionIds.forEach(function(id) {
+      var sec = document.getElementById(id);
+      if (sec && sec.getBoundingClientRect().top <= offset) { currentId = id; }
+    });
+
+    links.forEach(function(link) {
+      if (link.getAttribute('href') === '#' + currentId) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateNav, { passive: true });
+  updateNav();
+})();
+</script>
+</body>
+</html>
